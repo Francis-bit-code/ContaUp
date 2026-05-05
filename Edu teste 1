@@ -1,13 +1,21 @@
-import sqlite3 
+import sqlite3
+
+# conexão com o banco
 conexao = sqlite3.connect("banco.db")
 cursor = conexao.cursor()
+
+# criação da tabela
 cursor.execute("""
-                CREATE TABLE IF NOT EXISTS receitas (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, valor REAL NOT NULL, tipo TEXT NOT NULL, data TEXT
-               )
-                """)
+    CREATE TABLE IF NOT EXISTS receitas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        valor REAL NOT NULL,
+        tipo TEXT NOT NULL,
+        data TEXT
+    )
+""")
 conexao.commit()
-def cadastrar_receita(receitas):
+
+def cadastrar_receita():
     print("=== CADASTRO DE RECEITAS ===")
     
     while True:
@@ -33,27 +41,26 @@ def cadastrar_receita(receitas):
             print("Formato inválido! Use dd/mm/aaaa")
         else:
             break          
-    receita = {
-        "valor": valor,
-        "descricao": descricao,
-        "data": data
-    }
 
-    receitas.append(receita)
-    print("Receita cadastrada com sucesso!")
+    return valor, descricao, data
 
-    print("\nReceita cadastrada:")
-    print(f"Valor: R${valor:.2f}")
-    print(f"Descrição: {descricao}")
-    print(f"Data: {data}")
 
-receitas = []
-cadastrar_receita(receitas)
+# chama a função e recebe os dados
+valor, descricao, data = cadastrar_receita()
+
+# salva no banco
 cursor.execute(
-            "INSERT INTO despesas (valor , tipo , data) VALUES (?, ?, ?),",(valor,descricao,data)
-        )
+    "INSERT INTO receitas (valor, tipo, data) VALUES (?, ?, ?)",
+    (valor, descricao, data)
+)
+
 conexao.commit()
-print("Salvo no BANCO !")  
 
+print("Receita cadastrada com sucesso!")
+print(f"Valor: R${valor:.2f}")
+print(f"Descrição: {descricao}")
+print(f"Data: {data}")
+print("Salvo no BANCO!")
 
-
+# fecha conexão
+conexao.close()
