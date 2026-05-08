@@ -154,19 +154,136 @@ def mostrar_saldo():
     print(f"Total despesas: R$ {total_despesas:.2f}")
     print(f"Saldo atual:    R$ {saldo:.2f}")
 
-# menu
-while True:
-    print("1 - Cadastrar receita")
-    print("2 - Listar receitas")
-    print("3 - Cadastrar despesa")
-    print("4 - Listar despesas")
-    print("5 - Mostrar Saldo")
-    print("6 - Sair")
+# edicao de dados de receitas
+def editar_receita():
+
+    print("\n=== EDITAR RECEITA ===")
+
+    relatorio_receitas()
 
     try:
-        opcao = int(input("Escolha: "))
+        id_receita = int(input("\nDigite o ID da receita: "))
     except ValueError:
-        print("Inválido")
+        print("ID inválido!")
+        return
+
+    cursor.execute(
+        "SELECT * FROM receitas WHERE id = ?",
+        (id_receita,)
+    )
+
+    receita = cursor.fetchone()
+
+    if receita is None:
+        print("Receita não encontrada!")
+        return
+
+    print("\n=== DADOS ATUAIS ===")
+    print(f"Valor: {receita[1]}")
+    print(f"Categoria: {receita[2]}")
+    print(f"Data: {receita[3]}")
+
+    novo_valor = input("Novo valor: ")
+    nova_categoria = input("Nova categoria: ")
+    nova_data = input("Nova data: ")
+
+    valor = receita[1]
+    categoria = receita[2]
+    data = receita[3]
+
+    if novo_valor != "":
+        valor = float(novo_valor)
+
+    if nova_categoria != "":
+        categoria = nova_categoria
+
+    if nova_data != "":
+        data = nova_data
+
+    cursor.execute("""
+        UPDATE receitas
+        SET valor = ?, categoria = ?, data = ?
+        WHERE id = ?
+    """, (valor, categoria, data, id_receita))
+
+    conexao.commit()
+
+    print("Receita atualizada!")
+
+# edição de dados de despesas
+def editar_despesa():
+
+    print("\n=== EDITAR DESPESA ===")
+
+    relatorio_despesas()
+
+    try:
+        id_despesa = int(input("\nDigite o ID da despesa: "))
+    except ValueError:
+        print("ID inválido!")
+        return
+
+    cursor.execute(
+        "SELECT * FROM despesas WHERE id = ?",
+        (id_despesa,)
+    )
+
+    despesa = cursor.fetchone()
+
+    if despesa is None:
+        print("Despesa não encontrada!")
+        return
+
+    print("\n=== DADOS ATUAIS ===")
+    print(f"Valor: {despesa[1]}")
+    print(f"Categoria: {despesa[2]}")
+    print(f"Data: {despesa[3]}")
+
+    novo_valor = input("Novo valor: ")
+    nova_categoria = input("Nova categoria: ")
+    nova_data = input("Nova data: ")
+
+    valor = despesa[1]
+    categoria = despesa[2]
+    data = despesa[3]
+
+    if novo_valor != "":
+        valor = float(novo_valor)
+
+    if nova_categoria != "":
+        categoria = nova_categoria
+
+    if nova_data != "":
+        data = nova_data
+
+    cursor.execute("""
+        UPDATE despesas
+        SET valor = ?, categoria = ?, data = ?
+        WHERE id = ?
+    """, (valor, categoria, data, id_despesa))
+
+    conexao.commit()
+
+    print("Despesa atualizada!")
+# menu
+while True:
+
+    print("\n===== CONTROLE FINANCEIRO =====")
+    print("1 - Cadastrar receita")
+    print("2 - Listar receitas")
+    print("3 - Editar receita")
+
+    print("4 - Cadastrar despesa")
+    print("5 - Listar despesas")
+    print("6 - Editar despesa")
+
+    print("7 - Mostrar saldo")
+    print("8 - Sair")
+
+    try:
+        opcao = int(input("\nEscolha: "))
+    except ValueError:
+        print("Digite um número válido!")
         continue
 
     if opcao == 1:
@@ -176,14 +293,25 @@ while True:
         relatorio_receitas()
 
     elif opcao == 3:
-        cadastrar_despesa()
+        editar_receita()
 
     elif opcao == 4:
-        relatorio_despesas()
+        cadastrar_despesa()
 
     elif opcao == 5:
-        mostrar_saldo()
+        relatorio_despesas()
+
     elif opcao == 6:
+        editar_despesa()
+
+    elif opcao == 7:
+        mostrar_saldo()
+
+    elif opcao == 8:
+        print("Sistema encerrado!")
         break
+
+    else:
+        print("Opção inválida!")
 
 conexao.close()
