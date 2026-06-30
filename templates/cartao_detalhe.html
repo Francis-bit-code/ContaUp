@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ cartao.nome }} - ContaUP{% endblock %}
+{% block pagina %}Cartão {{ cartao.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class='page-header'><div><h2>{{ cartao.nome }}</h2><p>{% if cartao.banco %}{{ cartao.banco }} | {% endif %}Aqui você cadastra as dívidas e compras parceladas deste cartão.</p></div><a class='btn-secondary' href='{{ url_for('cartoes.cartoes') }}'>Voltar</a></section>
+
+<section class='cards-grid'>
+    <article class='card resumo-card'><span>Limite</span><strong>{{ formatar_moeda(cartao.limite_total) }}</strong><p>Limite informado.</p></article>
+    <article class='card resumo-card'><span>Parcelas ativas</span><strong>{{ formatar_moeda(total_parcelas_ativas) }}</strong><p>Valor mensal em andamento.</p></article>
+    <article class='card resumo-card'><span>Total pendente</span><strong class='valor despesa'>{{ formatar_moeda(total_pendente) }}</strong><p>Dívida restante.</p></article>
+    <article class='card resumo-card'><span>Vencimento</span><strong>{% if cartao.dia_vencimento %}Dia {{ cartao.dia_vencimento }}{% else %}Não informado{% endif %}</strong><p>Dia da fatura.</p></article>
+</section>
+
+<section class='form-grid'>
+    <article class='card'>
+        <div class='card-title'><h3>Nova dívida ou compra parcelada</h3><p>Cadastre aqui compras feitas no cartão, principalmente parceladas.</p></div>
+        <form class='formulario' method='POST' action='{{ url_for('cartoes.nova_compra_cartao', cartao_id=cartao.id) }}'>
+            <div class='form-group'><label>Descrição</label><input type='text' name='descricao' placeholder='Ex: Bicicleta, celular, notebook' required></div>
+            <div class='form-row'><div class='form-group'><label>Valor total</label><input type='text' name='valor_total' placeholder='Ex: 2030,00' required></div><div class='form-group'><label>Data da compra</label><input type='date' name='data_compra' value='{{ data_padrao }}' required></div></div>
+            <div class='form-row'><div class='form-group'><label>Parcelas</label><input type='number' name='parcelas_total' min='1' placeholder='Ex: 12' required></div><div class='form-group'><label>Categoria</label><select name='categoria_id'><option value=''>Sem categoria</option>{% for categoria in categorias %}<option value='{{ categoria.id }}'>{{ categoria.nome }}</option>{% endfor %}</select></div></div>
+            <div class='form-group'><label>Subcategoria</label><select name='subcategoria_id'><option value=''>Sem subcategoria</option>{% for subcategoria in subcategorias %}<option value='{{ subcategoria.id }}'>{{ subcategoria.nome }} - {{ subcategoria.categoria }}</option>{% endfor %}</select></div>
+            <button class='btn-primary' type='submit'>Cadastrar dívida do cartão</button>
+        </form>
+    </article>
+    <article class='card apoio-card'><div class='card-title'><h3>Exemplo</h3><p>Para uma bicicleta de R$ 2.030 em 12x, cadastre o valor total e 12 parcelas.</p></div><div class='lista-dicas'><div><strong>Valor total</strong><span>R$ 2.030,00.</span></div><div><strong>Parcelas</strong><span>12.</span></div><div><strong>Resultado</strong><span>O sistema calcula quanto falta e quanto entra por mês.</span></div></div></article>
+</section>
+
+<section class='card'>
+    <div class='card-title'><h3>Dívidas e compras cadastradas</h3><p>Visualização limpa. A edição fica recolhida.</p></div>
+    {% if compras %}
+        <div class='lista-resumo'>
+            {% for compra in compras %}
+                <div class='linha-lancamento'>
+                    <div class='lancamento-info'><div><strong>{{ compra.descricao }}</strong><span class='badge-info'>{{ compra.status }}</span></div><p>Parcela {{ compra.parcela_atual }}/{{ compra.parcelas_total }} | Faltam {{ compra.parcelas_pendentes }}</p><small>Total: {{ formatar_moeda(compra.valor_total) }} | Pendente: {{ formatar_moeda(compra.valor_pendente) }}</small></div>
+                    <div class='lancamento-valor'><strong class='valor-tabela despesa'>{{ formatar_moeda(compra.valor_parcela) }} por mês</strong></div>
+                    <details class='editar-detalhes'><summary>Editar dívida</summary><form class='formulario edicao-escondida' method='POST' action='{{ url_for('cartoes.editar_compra_cartao', cartao_id=cartao.id, compra_id=compra.id) }}'><div class='form-row'><div class='form-group'><label>Descrição</label><input type='text' name='descricao' value='{{ compra.descricao }}' required></div><div class='form-group'><label>Valor total</label><input type='text' name='valor_total' value='{{ compra.valor_total }}' required></div></div><div class='form-row'><div class='form-group'><label>Data</label><input type='date' name='data_compra' value='{{ compra.data_compra }}' required></div><div class='form-group'><label>Parcelas</label><input type='number' name='parcelas_total' min='1' value='{{ compra.parcelas_total }}' required></div></div><div class='form-row'><div class='form-group'><label>Categoria</label><select name='categoria_id'><option value=''>Sem categoria</option>{% for categoria in categorias %}<option value='{{ categoria.id }}' {% if categoria.nome == compra.categoria %}selected{% endif %}>{{ categoria.nome }}</option>{% endfor %}</select></div><div class='form-group'><label>Subcategoria</label><select name='subcategoria_id'><option value=''>Sem subcategoria</option>{% for subcategoria in subcategorias %}<option value='{{ subcategoria.id }}' {% if subcategoria.nome == compra.subcategoria %}selected{% endif %}>{{ subcategoria.nome }} - {{ subcategoria.categoria }}</option>{% endfor %}</select></div></div><div class='acoes-edicao'><button class='btn-secondary' type='submit'>Salvar</button><a class='link-excluir' href='{{ url_for('cartoes.excluir_compra_cartao', cartao_id=cartao.id, compra_id=compra.id) }}'>Desativar</a></div></form></details>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class='empty-state'><strong>Nenhuma dívida cadastrada</strong><p>Use o formulário acima para cadastrar compras do cartão.</p></div>
+    {% endif %}
+</section>
+{% endblock %}

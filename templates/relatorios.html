@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Relatórios - ContaUP{% endblock %}
+{% block pagina %}Relatórios{% endblock %}
+
+{% block conteudo %}
+<section class='page-header'><div><h2>Relatórios financeiros</h2><p>Resumo completo e fechamento mensal para comparar evolução.</p></div><form class='filtro-mes' method='GET' action='{{ url_for('relatorios.relatorios') }}'><label>Mês</label><input type='month' name='mes' value='{{ mes }}'><button type='submit'>Filtrar</button></form></section>
+<section class='card dica-card'><div><h3>Fechamento mensal</h3><p>Gere o fechamento depois de cadastrar receitas, despesas, cartões, gastos fixos e renda extra. Depois o sistema compara com o fechamento anterior.</p></div><form method='POST' action='{{ url_for('relatorios.gerar_relatorio_mensal') }}'><input type='hidden' name='mes' value='{{ mes }}'><button class='btn-primary' type='submit'>Gerar fechamento do mês</button></form></section>
+{% if fechamento_atual %}<section class='card relatorio-destaque'><span>Fechamento salvo</span><strong>{{ fechamento_atual.mes }}</strong><p>Gerado em {{ fechamento_atual.data_geracao }}. Maior categoria: {{ fechamento_atual.maior_categoria or 'não identificada' }}.</p></section>{% endif %}
+<section class='cards-grid'><article class='card resumo-card'><span>Receitas</span><strong class='valor receita'>{{ formatar_moeda(total_receitas) }}</strong><p>Entradas do mês.</p></article><article class='card resumo-card'><span>Despesas</span><strong class='valor despesa'>{{ formatar_moeda(total_despesas) }}</strong><p>Saídas do mês.</p></article><article class='card resumo-card'><span>Saldo atual</span><strong class='valor {% if saldo >= 0 %}receita{% else %}despesa{% endif %}'>{{ formatar_moeda(saldo) }}</strong><p>Receitas menos despesas.</p></article><article class='card resumo-card'><span>Saldo previsto</span><strong class='valor {% if saldo_previsto >= 0 %}receita{% else %}despesa{% endif %}'>{{ formatar_moeda(saldo_previsto) }}</strong><p>Após compromissos fixos.</p></article></section>
+<section class='cards-grid'><article class='card resumo-card'><span>Gastos fixos</span><strong>{{ formatar_moeda(total_gastos_fixos) }}</strong><p>Contas e parcelas.</p></article><article class='card resumo-card'><span>Parcelas cartão</span><strong>{{ formatar_moeda(total_parcelas_cartao) }}</strong><p>Valor mensal.</p></article><article class='card resumo-card'><span>Total pendente cartão</span><strong class='valor despesa'>{{ formatar_moeda(total_pendente_cartao) }}</strong><p>Valor restante.</p></article><article class='card resumo-card'><span>Renda extra</span><strong class='valor receita'>{{ formatar_moeda(total_renda_extra) }}</strong><p>Valores extras.</p></article></section>
+{% if fechamento_anterior %}<section class='card'><div class='card-title'><h3>Comparativo com fechamento anterior</h3><p>Compara o mês atual com {{ fechamento_anterior.mes }}.</p></div><div class='lista-dicas'><div><strong>Saldo</strong>{% if saldo > fechamento_anterior.saldo %}<span>Melhorou em relação ao mês anterior.</span>{% elif saldo < fechamento_anterior.saldo %}<span>Piorou em relação ao mês anterior.</span>{% else %}<span>Ficou igual ao mês anterior.</span>{% endif %}</div><div><strong>Despesas</strong>{% if total_despesas < fechamento_anterior.total_despesas %}<span>Você gastou menos do que no fechamento anterior.</span>{% elif total_despesas > fechamento_anterior.total_despesas %}<span>Você gastou mais do que no fechamento anterior.</span>{% else %}<span>As despesas ficaram iguais.</span>{% endif %}</div><div><strong>Renda extra</strong>{% if total_renda_extra > fechamento_anterior.total_renda_extra %}<span>Sua renda extra aumentou.</span>{% elif total_renda_extra < fechamento_anterior.total_renda_extra %}<span>Sua renda extra diminuiu.</span>{% else %}<span>Sua renda extra ficou igual.</span>{% endif %}</div></div></section>{% else %}<section class='card'><div class='card-title'><h3>Comparativo mensal</h3><p>Gere pelo menos dois fechamentos mensais para o sistema mostrar evolução mês a mês.</p></div></section>{% endif %}
+
+
+<section class='dashboard-grid'>
+    <article class='card'>
+        <div class='card-title'>
+            <h3>Renda fixa mensal</h3>
+            <p>Entradas previstas automaticamente, como salário no 5º dia útil.</p>
+        </div>
+
+        {% if rendas_fixas_mes %}
+            <div class='lista-resumo'>
+                {% for renda in rendas_fixas_mes %}
+                    <div class='linha-resumo'>
+                        <div>
+                            <strong>{{ renda.descricao }}</strong>
+                            <span>{{ renda.texto_recebimento }}</span>
+                            <small>Previsão: {{ renda.data_prevista_formatada }}</small>
+                        </div>
+
+                        <b class='valor-tabela receita'>{{ formatar_moeda(renda.valor) }}</b>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class='empty-state'>
+                <strong>Nenhuma renda fixa cadastrada</strong>
+                <p>Cadastre salário ou bolsa em Renda Fixa para melhorar o relatório.</p>
+            </div>
+        {% endif %}
+    </article>
+
+    <article class='card'>
+        <div class='card-title'>
+            <h3>Composição das receitas</h3>
+            <p>Mostra quanto veio de renda fixa e quanto veio de lançamentos comuns.</p>
+        </div>
+
+        <div class='lista-resumo'>
+            <div class='linha-resumo'>
+                <div>
+                    <strong>Renda fixa</strong>
+                    <span>Salário, bolsa ou entrada mensal previsível.</span>
+                </div>
+
+                <b class='valor-tabela receita'>{{ formatar_moeda(total_renda_fixa) }}</b>
+            </div>
+
+            <div class='linha-resumo'>
+                <div>
+                    <strong>Outras receitas lançadas</strong>
+                    <span>Valores cadastrados manualmente em lançamentos.</span>
+                </div>
+
+                <b class='valor-tabela receita'>{{ formatar_moeda(total_receitas_lancamentos) }}</b>
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class='dashboard-grid'><article class='card'><div class='card-title'><h3>Resumo por categoria</h3><p>Movimentações do mês.</p></div>{% if resumo_categorias %}<div class='lista-resumo'>{% for item in resumo_categorias %}<div class='linha-resumo'><div><strong>{{ item.categoria }}</strong><span class='tipo {{ item.tipo }}'>{{ item.tipo }}</span></div><b class='valor-tabela {{ item.tipo }}'>{{ formatar_moeda(item.total) }}</b></div>{% endfor %}</div>{% else %}<div class='empty-state'><strong>Nenhuma categoria</strong><p>Cadastre lançamentos.</p></div>{% endif %}</article><article class='card'><div class='card-title'><h3>Formas de pagamento</h3><p>Como as despesas foram pagas.</p></div>{% if resumo_pagamentos %}<div class='lista-resumo'>{% for item in resumo_pagamentos %}<div class='linha-resumo'><div><strong>{{ item.forma_pagamento or 'Não informado' }}</strong><span>Despesa do mês</span></div><b class='valor-tabela despesa'>{{ formatar_moeda(item.total) }}</b></div>{% endfor %}</div>{% else %}<div class='empty-state'><strong>Nenhuma despesa</strong><p>Cadastre despesas para aparecer aqui.</p></div>{% endif %}</article></section>
+<section class='dashboard-grid'><article class='card'><div class='card-title'><h3>Parcelas ativas</h3><p>Compras de cartão em andamento.</p></div>{% if resumo_cartoes %}<div class='lista-resumo'>{% for compra in resumo_cartoes %}<div class='linha-resumo'><div><strong>{{ compra.descricao }}</strong><span>{{ compra.cartao }} | Parcela {{ compra.parcela_atual }}/{{ compra.parcelas_total }}</span><small>Faltam {{ compra.parcelas_pendentes }}</small></div><b class='valor-tabela despesa'>{{ formatar_moeda(compra.valor_parcela) }}</b></div>{% endfor %}</div>{% else %}<div class='empty-state'><strong>Nenhuma parcela ativa</strong><p>Cadastre dívidas nos cartões.</p></div>{% endif %}</article><article class='card'><div class='card-title'><h3>Conclusão</h3><p>Análise simples do relatório.</p></div><div class='lista-dicas'><div><strong>Situação</strong>{% if saldo_previsto < 0 %}<span>Saldo previsto negativo. Revise despesas e parcelas.</span>{% elif saldo_previsto <= 200 %}<span>Saldo positivo, mas apertado. Evite novas compras.</span>{% else %}<span>Saldo previsto positivo. Boa organização até aqui.</span>{% endif %}</div><div><strong>Planejamentos</strong><span>Total pendente: {{ formatar_moeda(total_planejado) }}.</span></div></div></article></section>
+{% endblock %}

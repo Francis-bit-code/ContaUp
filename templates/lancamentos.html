@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Lançamentos - ContaUP{% endblock %}
+
+{% block pagina %}Lançamentos{% endblock %}
+
+{% block conteudo %}
+<section class='page-header'>
+    <div>
+        <h2>Cadastrar valores</h2>
+        <p>Aqui é onde cadastra salário, lanche, mercado, aluguel e outras entradas ou saídas.</p>
+    </div>
+
+    <form class='filtro-mes' method='GET' action='{{ url_for('lancamentos.lancamentos') }}'>
+        <label for='mes'>Mês</label>
+        <input type='month' id='mes' name='mes' value='{{ mes }}'>
+        <select name='tipo'>
+            <option value='' {% if tipo == '' %}selected{% endif %}>Todos</option>
+            <option value='receita' {% if tipo == 'receita' %}selected{% endif %}>Receitas</option>
+            <option value='despesa' {% if tipo == 'despesa' %}selected{% endif %}>Despesas</option>
+        </select>
+        <button type='submit'>Filtrar</button>
+    </form>
+</section>
+
+<section class='form-grid'>
+    <article class='card'>
+        <div class='card-title'>
+            <h3>Novo lançamento</h3>
+            <p>Categoria organiza. O valor é cadastrado aqui.</p>
+        </div>
+
+        <form class='formulario' method='POST' action='{{ url_for('lancamentos.novo_lancamento') }}'>
+            <div class='form-row'>
+                <div class='form-group'>
+                    <label for='tipo'>Tipo</label>
+                    <select id='tipo' name='tipo' required>
+                        <option value=''>Selecione</option>
+                        <option value='receita'>Receita</option>
+                        <option value='despesa'>Despesa</option>
+                    </select>
+                </div>
+
+                <div class='form-group'>
+                    <label for='valor'>Valor</label>
+                    <input type='text' id='valor' name='valor' placeholder='Ex: 1500,00' required>
+                </div>
+            </div>
+
+            <div class='form-group'>
+                <label for='descricao'>Descrição</label>
+                <input type='text' id='descricao' name='descricao' placeholder='Ex: Salário do mês, lanche, mercado, aluguel' required>
+            </div>
+
+            <div class='form-row'>
+                <div class='form-group'>
+                    <label for='data'>Data</label>
+                    <input type='date' id='data' name='data' value='{{ data_padrao }}' required>
+                </div>
+
+                <div class='form-group'>
+                    <label for='forma_pagamento'>Forma de pagamento</label>
+                    <select id='forma_pagamento' name='forma_pagamento'>
+                        <option value='Não informado'>Não informado</option>
+                        <option value='Pix'>Pix</option>
+                        <option value='Dinheiro'>Dinheiro</option>
+                        <option value='Débito'>Débito</option>
+                        <option value='Crédito'>Crédito</option>
+                        <option value='Boleto'>Boleto</option>
+                        <option value='Transferência'>Transferência</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class='form-row'>
+                <div class='form-group'>
+                    <label for='categoria_id'>Categoria</label>
+                    <select id='categoria_id' name='categoria_id' required>
+                        <option value=''>Selecione</option>
+                        {% for categoria in categorias %}
+                            <option value='{{ categoria.id }}'>{{ categoria.nome }} - {{ categoria.tipo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class='form-group'>
+                    <label for='subcategoria_id'>Subcategoria</label>
+                    <select id='subcategoria_id' name='subcategoria_id'>
+                        <option value=''>Sem subcategoria</option>
+                        {% for subcategoria in subcategorias %}
+                            <option value='{{ subcategoria.id }}'>{{ subcategoria.nome }} - {{ subcategoria.categoria }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <input type='hidden' name='parcelas' value='1'>
+            <button class='btn-primary' type='submit'>Cadastrar valor</button>
+        </form>
+    </article>
+
+    <article class='card apoio-card'>
+        <div class='card-title'>
+            <h3>Exemplos rápidos</h3>
+            <p>Feito para usuário leigo entender onde cada coisa entra.</p>
+        </div>
+
+        <div class='lista-dicas'>
+            <div><strong>Cadastrar salário</strong><span>Tipo: receita | Categoria: Salário | Valor: salário recebido.</span></div>
+            <div><strong>Cadastrar lanche</strong><span>Tipo: despesa | Categoria: Alimentação | Subcategoria: Lanche.</span></div>
+            <div><strong>Cadastrar mercado</strong><span>Tipo: despesa | Categoria: Alimentação | Subcategoria: Mercado.</span></div>
+            <div><strong>Compras parceladas</strong><span>Use a aba Cartões para cadastrar dívidas e compras parceladas.</span></div>
+        </div>
+    </article>
+</section>
+
+<section class='card'>
+    <div class='card-title'>
+        <h3>Lançamentos cadastrados</h3>
+        <p>Visualização limpa. A edição só aparece quando o usuário abrir.</p>
+    </div>
+
+    {% if lancamentos %}
+        <div class='lista-resumo'>
+            {% for item in lancamentos %}
+                <div class='linha-lancamento'>
+                    <div class='lancamento-info'>
+                        <div>
+                            <strong>{{ item.descricao }}</strong>
+                            <span class='tipo {{ item.tipo }}'>{{ item.tipo }}</span>
+                        </div>
+                        <p>{{ item.categoria }}{% if item.subcategoria %} | {{ item.subcategoria }}{% endif %}</p>
+                        <small>{{ item.data }} | {{ item.forma_pagamento }}</small>
+                    </div>
+
+                    <div class='lancamento-valor'>
+                        <strong class='valor-tabela {{ item.tipo }}'>{{ formatar_moeda(item.valor) }}</strong>
+                    </div>
+
+                    <details class='editar-detalhes'>
+                        <summary>Editar lançamento</summary>
+
+                        <form class='formulario edicao-escondida' method='POST' action='{{ url_for('lancamentos.editar_lancamento', lancamento_id=item.id) }}'>
+                            <div class='form-row'>
+                                <div class='form-group'>
+                                    <label>Descrição</label>
+                                    <input type='text' name='descricao' value='{{ item.descricao }}' required>
+                                </div>
+                                <div class='form-group'>
+                                    <label>Tipo</label>
+                                    <select name='tipo' required>
+                                        <option value='receita' {% if item.tipo == 'receita' %}selected{% endif %}>Receita</option>
+                                        <option value='despesa' {% if item.tipo == 'despesa' %}selected{% endif %}>Despesa</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class='form-row'>
+                                <div class='form-group'>
+                                    <label>Valor</label>
+                                    <input type='text' name='valor' value='{{ item.valor }}' required>
+                                </div>
+                                <div class='form-group'>
+                                    <label>Data</label>
+                                    <input type='date' name='data' value='{{ item.data }}' required>
+                                </div>
+                            </div>
+
+                            <div class='form-row'>
+                                <div class='form-group'>
+                                    <label>Categoria</label>
+                                    <select name='categoria_id' required>
+                                        {% for categoria in categorias %}
+                                            <option value='{{ categoria.id }}' {% if categoria.nome == item.categoria %}selected{% endif %}>{{ categoria.nome }} - {{ categoria.tipo }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class='form-group'>
+                                    <label>Subcategoria</label>
+                                    <select name='subcategoria_id'>
+                                        <option value=''>Sem subcategoria</option>
+                                        {% for subcategoria in subcategorias %}
+                                            <option value='{{ subcategoria.id }}' {% if subcategoria.nome == item.subcategoria %}selected{% endif %}>{{ subcategoria.nome }} - {{ subcategoria.categoria }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class='form-group'>
+                                <label>Forma de pagamento</label>
+                                <select name='forma_pagamento'>
+                                    <option value='Não informado' {% if item.forma_pagamento == 'Não informado' %}selected{% endif %}>Não informado</option>
+                                    <option value='Pix' {% if item.forma_pagamento == 'Pix' %}selected{% endif %}>Pix</option>
+                                    <option value='Dinheiro' {% if item.forma_pagamento == 'Dinheiro' %}selected{% endif %}>Dinheiro</option>
+                                    <option value='Débito' {% if item.forma_pagamento == 'Débito' %}selected{% endif %}>Débito</option>
+                                    <option value='Crédito' {% if item.forma_pagamento == 'Crédito' %}selected{% endif %}>Crédito</option>
+                                    <option value='Boleto' {% if item.forma_pagamento == 'Boleto' %}selected{% endif %}>Boleto</option>
+                                    <option value='Transferência' {% if item.forma_pagamento == 'Transferência' %}selected{% endif %}>Transferência</option>
+                                </select>
+                            </div>
+
+                            <input type='hidden' name='parcelas' value='1'>
+                            <div class='acoes-edicao'>
+                                <button class='btn-secondary' type='submit'>Salvar alterações</button>
+                                <a class='link-excluir' href='{{ url_for('lancamentos.excluir_lancamento', lancamento_id=item.id) }}'>Desativar</a>
+                            </div>
+                        </form>
+                    </details>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class='empty-state'>
+            <strong>Nenhum lançamento encontrado</strong>
+            <p>Cadastre salário, despesas ou outras movimentações para alimentar os relatórios.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

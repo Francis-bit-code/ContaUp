@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Categorias - ContaUP{% endblock %}
+{% block pagina %}Categorias{% endblock %}
+
+{% block conteudo %}
+<section class='page-header'>
+    <div>
+        <h2>Categorias e subcategorias</h2>
+        <p>Categorias organizam os valores. O cadastro do dinheiro fica em Lançamentos.</p>
+    </div>
+</section>
+
+<section class='form-grid'>
+    <article class='card'>
+        <div class='card-title'>
+            <h3>Nova categoria</h3>
+            <p>Use apenas se precisar criar uma organização diferente das categorias padrão.</p>
+        </div>
+        <form class='formulario' method='POST' action='{{ url_for('categorias.nova_categoria') }}'>
+            <div class='form-group'><label>Nome</label><input type='text' name='nome' placeholder='Ex: Academia, Pet, Trabalho' required></div>
+            <div class='form-row'>
+                <div class='form-group'><label>Tipo</label><select name='tipo' required><option value=''>Selecione</option><option value='receita'>Receita</option><option value='despesa'>Despesa</option></select></div>
+                <div class='form-group'><label>Usa subcategorias?</label><select name='usa_subcategorias'><option value='0'>Não</option><option value='1'>Sim</option></select></div>
+            </div>
+            <button class='btn-primary' type='submit'>Cadastrar categoria</button>
+        </form>
+    </article>
+
+    <article class='card apoio-card'>
+        <div class='card-title'><h3>Categorias padrão</h3><p>O sistema já cria Salário, Alimentação, Moradia, Gasto fixo e outras opções para usuários leigos.</p></div>
+        <div class='lista-dicas'>
+            <div><strong>Salário</strong><span>Já vem como receita para facilitar cadastro de renda mensal.</span></div>
+            <div><strong>Alimentação</strong><span>Já vem com Mercado, Lanche, Restaurante e Delivery.</span></div>
+            <div><strong>Gasto fixo</strong><span>Já vem como despesa para contas recorrentes.</span></div>
+        </div>
+    </article>
+</section>
+
+<section class='card'>
+    <div class='card-title'><h3>Categorias cadastradas</h3><p>Visualize primeiro. Edite somente quando necessário.</p></div>
+    {% if categorias %}
+        <div class='lista-resumo'>
+            {% for categoria in categorias %}
+                <div class='linha-lancamento'>
+                    <div class='lancamento-info'>
+                        <div><strong>{{ categoria.nome }}</strong><span class='tipo {{ categoria.tipo }}'>{{ categoria.tipo }}</span></div>
+                        {% if categoria.usa_subcategorias == 1 %}<p>Usa subcategorias</p>{% else %}<p>Não usa subcategorias</p>{% endif %}
+                    </div>
+                    <details class='editar-detalhes'>
+                        <summary>Editar categoria</summary>
+                        <form class='formulario edicao-escondida' method='POST' action='{{ url_for('categorias.editar_categoria', categoria_id=categoria.id) }}'>
+                            <div class='form-row'>
+                                <div class='form-group'><label>Nome</label><input type='text' name='nome' value='{{ categoria.nome }}' required></div>
+                                <div class='form-group'><label>Tipo</label><select name='tipo'><option value='receita' {% if categoria.tipo == 'receita' %}selected{% endif %}>Receita</option><option value='despesa' {% if categoria.tipo == 'despesa' %}selected{% endif %}>Despesa</option></select></div>
+                                <div class='form-group'><label>Subcategorias</label><select name='usa_subcategorias'><option value='0' {% if categoria.usa_subcategorias == 0 %}selected{% endif %}>Não usa</option><option value='1' {% if categoria.usa_subcategorias == 1 %}selected{% endif %}>Usa</option></select></div>
+                            </div>
+                            <div class='acoes-edicao'><button class='btn-secondary' type='submit'>Salvar</button><a class='link-excluir' href='{{ url_for('categorias.excluir_categoria', categoria_id=categoria.id) }}'>Desativar</a></div>
+                        </form>
+                    </details>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class='empty-state'><strong>Nenhuma categoria cadastrada</strong><p>As categorias padrão serão criadas ao reiniciar o sistema.</p></div>
+    {% endif %}
+</section>
+
+<section class='form-grid'>
+    <article class='card'>
+        <div class='card-title'><h3>Nova subcategoria</h3><p>Use para detalhar categorias como Alimentação.</p></div>
+        <form class='formulario' method='POST' action='{{ url_for('categorias.nova_subcategoria') }}'>
+            <div class='form-group'><label>Categoria</label><select name='categoria_id' required><option value=''>Selecione</option>{% for categoria in categorias %}{% if categoria.usa_subcategorias == 1 %}<option value='{{ categoria.id }}'>{{ categoria.nome }}</option>{% endif %}{% endfor %}</select></div>
+            <div class='form-group'><label>Nome</label><input type='text' name='nome' placeholder='Ex: Café, Marmita, Restaurante' required></div>
+            <button class='btn-primary' type='submit'>Cadastrar subcategoria</button>
+        </form>
+    </article>
+
+    <article class='card'>
+        <div class='card-title'><h3>Subcategorias cadastradas</h3><p>Edição fica escondida para não poluir a tela.</p></div>
+        {% if subcategorias %}
+            <div class='lista-resumo'>
+                {% for subcategoria in subcategorias %}
+                    <div class='linha-resumo'>
+                        <div><strong>{{ subcategoria.nome }}</strong><span>{{ subcategoria.categoria }} | {{ subcategoria.tipo }}</span></div>
+                        <details class='editar-detalhes menor'>
+                            <summary>Editar</summary>
+                            <form class='formulario edicao-escondida' method='POST' action='{{ url_for('categorias.editar_subcategoria', subcategoria_id=subcategoria.id) }}'>
+                                <div class='form-group'><label>Nome</label><input type='text' name='nome' value='{{ subcategoria.nome }}' required></div>
+                                <div class='form-group'><label>Categoria</label><select name='categoria_id'>{% for categoria in categorias %}{% if categoria.usa_subcategorias == 1 %}<option value='{{ categoria.id }}' {% if categoria.id == subcategoria.categoria_id %}selected{% endif %}>{{ categoria.nome }}</option>{% endif %}{% endfor %}</select></div>
+                                <div class='acoes-edicao'><button class='btn-secondary' type='submit'>Salvar</button><a class='link-excluir' href='{{ url_for('categorias.excluir_subcategoria', subcategoria_id=subcategoria.id) }}'>Desativar</a></div>
+                            </form>
+                        </details>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class='empty-state'><strong>Nenhuma subcategoria</strong><p>As principais subcategorias de alimentação já vêm no sistema.</p></div>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

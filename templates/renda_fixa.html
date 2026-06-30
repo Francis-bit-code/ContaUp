@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Renda Fixa - ContaUP{% endblock %}
+
+{% block pagina %}Renda Fixa{% endblock %}
+
+{% block conteudo %}
+<section class='page-header'>
+    <div>
+        <h2>Renda fixa</h2>
+        <p>Cadastre salários e entradas que caem todos os meses, sem precisar informar ano.</p>
+    </div>
+
+    <form class='filtro-mes' method='GET' action='{{ url_for('renda_fixa.renda_fixa') }}'>
+        <label for='mes'>Mês para previsão</label>
+        <input type='month' id='mes' name='mes' value='{{ mes }}'>
+        <button type='submit'>Ver previsão</button>
+    </form>
+</section>
+
+<section class='cards-grid'>
+    <article class='card resumo-card'>
+        <span>Total mensal fixo</span>
+        <strong class='valor receita'>{{ formatar_moeda(total_renda_fixa) }}</strong>
+        <p>Valor que o sistema considera automaticamente nas receitas do mês.</p>
+    </article>
+
+    <article class='card resumo-card'>
+        <span>Rendas cadastradas</span>
+        <strong>{{ rendas|length }}</strong>
+        <p>Entradas fixas ativas, como salário, bolsa ou pensão.</p>
+    </article>
+
+    <article class='card resumo-card'>
+        <span>Sem ano manual</span>
+        <strong>Mensal</strong>
+        <p>Você informa o dia, e o ContaUP calcula a previsão de cada mês.</p>
+    </article>
+
+    <article class='card resumo-card'>
+        <span>Exemplo</span>
+        <strong>5º útil</strong>
+        <p>Ideal para salário que cai no quinto dia útil.</p>
+    </article>
+</section>
+
+<section class='form-grid'>
+    <article class='card'>
+        <div class='card-title'>
+            <h3>Nova renda fixa</h3>
+            <p>Use para salário, bolsa, pensão ou qualquer entrada mensal previsível.</p>
+        </div>
+
+        <form class='formulario' method='POST' action='{{ url_for('renda_fixa.nova_renda_fixa') }}'>
+            <div class='form-group'>
+                <label for='descricao'>Descrição</label>
+                <input type='text' id='descricao' name='descricao' placeholder='Ex: Salário, bolsa, pensão' required>
+            </div>
+
+            <div class='form-row'>
+                <div class='form-group'>
+                    <label for='valor'>Valor mensal</label>
+                    <input type='text' id='valor' name='valor' placeholder='Ex: 1800,00' required>
+                </div>
+
+                <div class='form-group'>
+                    <label for='categoria_id'>Categoria</label>
+                    <select id='categoria_id' name='categoria_id'>
+                        <option value=''>Salário</option>
+
+                        {% for categoria in categorias %}
+                            <option value='{{ categoria.id }}'>{{ categoria.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class='form-row'>
+                <div class='form-group'>
+                    <label for='tipo_recebimento'>Como esse dinheiro cai?</label>
+                    <select id='tipo_recebimento' name='tipo_recebimento' required>
+                        <option value='dia_util'>Dia útil do mês</option>
+                        <option value='dia_mes'>Dia fixo do mês</option>
+                    </select>
+                </div>
+
+                <div class='form-group'>
+                    <label for='dia_recebimento'>Dia</label>
+                    <input type='number' id='dia_recebimento' name='dia_recebimento' min='1' max='31' placeholder='Ex: 5' required>
+                </div>
+            </div>
+
+            <button class='btn-primary' type='submit'>Cadastrar renda fixa</button>
+        </form>
+    </article>
+
+    <article class='card apoio-card'>
+        <div class='card-title'>
+            <h3>Como usar?</h3>
+            <p>Aqui é o lugar certo para cadastrar o salário.</p>
+        </div>
+
+        <div class='lista-dicas'>
+            <div>
+                <strong>Salário no 5º dia útil</strong>
+                <span>Escolha dia útil do mês e coloque o número 5.</span>
+            </div>
+
+            <div>
+                <strong>Bolsa todo dia 10</strong>
+                <span>Escolha dia fixo do mês e coloque o número 10.</span>
+            </div>
+
+            <div>
+                <strong>Entradas avulsas</strong>
+                <span>Freelas e valores que não são fixos continuam na aba Renda Extra.</span>
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class='card'>
+    <div class='card-title'>
+        <h3>Rendas fixas cadastradas</h3>
+        <p>Visualize suas entradas mensais. A edição fica recolhida para não poluir a tela.</p>
+    </div>
+
+    {% if rendas %}
+        <div class='lista-resumo'>
+            {% for renda in rendas %}
+                <div class='linha-lancamento'>
+                    <div class='lancamento-info'>
+                        <div>
+                            <strong>{{ renda.descricao }}</strong>
+                            <span class='tipo receita'>Receita fixa</span>
+                        </div>
+
+                        <p>{{ renda.texto_recebimento }}</p>
+                        <small>Previsão em {{ mes }}: {{ renda.data_prevista_formatada }}</small>
+                    </div>
+
+                    <div class='lancamento-valor'>
+                        <strong class='valor-tabela receita'>{{ formatar_moeda(renda.valor) }}</strong>
+                    </div>
+
+                    <details class='editar-detalhes'>
+                        <summary>Editar renda fixa</summary>
+
+                        <form class='formulario edicao-escondida' method='POST' action='{{ url_for('renda_fixa.editar_renda_fixa', renda_id=renda.id) }}'>
+                            <div class='form-row'>
+                                <div class='form-group'>
+                                    <label>Descrição</label>
+                                    <input type='text' name='descricao' value='{{ renda.descricao }}' required>
+                                </div>
+
+                                <div class='form-group'>
+                                    <label>Valor mensal</label>
+                                    <input type='text' name='valor' value='{{ renda.valor }}' required>
+                                </div>
+                            </div>
+
+                            <div class='form-row'>
+                                <div class='form-group'>
+                                    <label>Categoria</label>
+                                    <select name='categoria_id'>
+                                        <option value=''>Salário</option>
+
+                                        {% for categoria in categorias %}
+                                            <option value='{{ categoria.id }}' {% if categoria.id == renda.categoria_id %}selected{% endif %}>{{ categoria.nome }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class='form-group'>
+                                    <label>Forma de recebimento</label>
+                                    <select name='tipo_recebimento'>
+                                        <option value='dia_util' {% if renda.tipo_recebimento == 'dia_util' %}selected{% endif %}>Dia útil do mês</option>
+                                        <option value='dia_mes' {% if renda.tipo_recebimento == 'dia_mes' %}selected{% endif %}>Dia fixo do mês</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class='form-group'>
+                                <label>Dia</label>
+                                <input type='number' name='dia_recebimento' min='1' max='31' value='{{ renda.dia_recebimento }}' required>
+                            </div>
+
+                            <div class='acoes-edicao'>
+                                <button class='btn-secondary' type='submit'>Salvar alterações</button>
+                                <a class='link-excluir' href='{{ url_for('renda_fixa.excluir_renda_fixa', renda_id=renda.id) }}'>Desativar</a>
+                            </div>
+                        </form>
+                    </details>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class='empty-state'>
+            <strong>Nenhuma renda fixa cadastrada</strong>
+            <p>Cadastre seu salário aqui para ele entrar automaticamente no saldo mensal.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

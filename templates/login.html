@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Login - ContaUP{% endblock %}
+
+{% block conteudo %}
+<section class='auth-card'>
+    <div class='auth-logo'>
+        <img src='{{ url_for('static', filename='img/logo_horizontal.png') }}' alt='Logo ContaUP'>
+    </div>
+
+    <div class='auth-text'>
+        <h1>Bem-vindo ao ContaUP</h1>
+        <p>Entre para acompanhar seus gastos, cartões, renda extra e planejamentos.</p>
+    </div>
+
+    <form class='auth-form' method='POST' action='{{ url_for('auth.login') }}'>
+        <div class='form-group'>
+            <label for='email'>E-mail</label>
+            <input type='email' id='email' name='email' placeholder='Digite seu e-mail' required>
+        </div>
+
+        <div class='form-group'>
+            <label for='senha'>Senha</label>
+            <input type='password' id='senha' name='senha' placeholder='Digite sua senha' required>
+        </div>
+
+        <button class='btn-primary' type='submit'>Entrar no sistema</button>
+    </form>
+
+    <div class='auth-footer'>
+        <p>Ainda não tem conta?</p>
+        <a href='{{ url_for('auth.cadastro') }}'>Criar cadastro</a>
+    </div>
+
+    <div class='auth-demo'>
+        <strong>Acesso de teste</strong>
+        <span>admin@contaup.com</span>
+        <span>Senha: 1234</span>
+    </div>
+</section>
+{% endblock %}

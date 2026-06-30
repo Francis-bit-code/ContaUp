@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ cartao.nome }} - ContaUP{% endblock %}
+
+{% block pagina %}Cartão {{ cartao.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class='page-header'>
+    <div>
+        <h2>{{ cartao.nome }}</h2>
+
+        {% if cartao.banco %}
+            <p>{{ cartao.banco }} | Controle de compras parceladas</p>
+        {% else %}
+            <p>Controle de compras parceladas deste cartão.</p>
+        {% endif %}
+    </div>
+
+    <a class='btn-secondary' href='{{ url_for('cartoes.cartoes') }}'>Voltar para cartões</a>
+</section>
+
+<section class='cards-grid'>
+    <article class='card resumo-card'>
+        <span>Limite cadastrado</span>
+        <strong>{{ formatar_moeda(cartao.limite_total) }}</strong>
+        <p>Valor informado pelo usuário para este cartão.</p>
+    </article>
+
+    <article class='card resumo-card'>
+        <span>Parcelas ativas</span>
+        <strong>{{ formatar_moeda(total_parcelas_ativas) }}</strong>
+        <p>Valor mensal previsto em compras ainda não quitadas.</p>
+    </article>
+
+    <article class='card resumo-card'>
+        <span>Total pendente</span>
+        <strong class='valor despesa'>{{ formatar_moeda(total_pendente) }}</strong>
+        <p>Valor restante das compras parceladas.</p>
+    </article>
+
+    <article class='card resumo-card'>
+        <span>Vencimento</span>
+
+        {% if cartao.dia_vencimento %}
+            <strong>Dia {{ cartao.dia_vencimento }}</strong>
+            <p>Dia informado para vencimento da fatura.</p>
+        {% else %}
+            <strong>Não informado</strong>
+            <p>Edite o cartão para informar o vencimento.</p>
+        {% endif %}
+    </article>
+</section>
+
+<section class='form-grid'>
+    <article class='card'>
+        <div class='card-title'>
+            <h3>Nova compra parcelada</h3>
+            <p>Cadastre uma compra feita neste cartão para acompanhar as parcelas.</p>
+        </div>
+
+        <form class='formulario' method='POST' action='{{ url_for('cartoes.nova_compra_cartao', cartao_id=cartao.id) }}'>
+            <div class='form-group'>
+                <label for='descricao'>Descrição da compra</label>
+                <input type='text' id='descricao' name='descricao' placeholder='Ex: Bicicleta, celular, notebook' required>
+            </div>
+
+            <div class='form-row'>
+                <div class='form-group'>
+                    <label for='valor_total'>Valor total</label>
+                    <input type='text' id='valor_total' name='valor_total' placeholder='Ex: 2030,00' required>
+                </div>
+
+                <div class='form-group'>
+                    <label for='data_compra'>Data da compra</label>
+                    <input type='date' id='data_compra' name='data_compra' required>
+                </div>
+            </div>
+
+            <div class='form-row'>
+                <div class='form-group'>
+                    <label for='parcelas_total'>Quantidade de parcelas</label>
+                    <input type='number' id='parcelas_total' name='parcelas_total' min='1' placeholder='Ex: 12' required>
+                </div>
+
+                <div class='form-group'>
+                    <label for='categoria_id'>Categoria</label>
+                    <select id='categoria_id' name='categoria_id'>
+                        <option value=''>Sem categoria</option>
+
+                        {% for categoria in categorias %}
+                            <option value='{{ categoria.id }}'>
+                                {{ categoria.nome }}
+                                {% if categoria.usa_subcategorias == 1 %}
+                                    - usa subcategoria
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class='form-group'>
+                <label for='subcategoria_id'>Subcategoria</label>
+                <select id='subcategoria_id' name='subcategoria_id'>
+                    <option value=''>Sem subcategoria</option>
+
+                    {% for subcategoria in subcategorias %}
+                        <option value='{{ subcategoria.id }}'>
+                            {{ subcategoria.nome }} - {{ subcategoria.categoria }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button class='btn-primary' type='submit'>Cadastrar compra</button>
+        </form>
+    </article>
+
+    <article class='card apoio-card'>
+        <div class='card-title'>
+            <h3>Como o ContaUP calcula?</h3>
+            <p>O sistema usa a data da compra e a quantidade de parcelas para identificar a situação atual.</p>
+        </div>
+
+        <div class='lista-dicas'>
+            <div>
+                <strong>Parcela atual</strong>
+                <span>Mostra em qual parcela a compra está no mês atual.</span>
+            </div>
+
+            <div>
+                <strong>Parcelas pendentes</strong>
+                <span>Mostra quantas parcelas ainda faltam para quitar a compra.</span>
+            </div>
+
+            <div>
+                <strong>Gasto previsto</strong>
+                <span>Enquanto a compra não for quitada, ela entra como compromisso financeiro.</span>
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class='card'>
+    <div class='card-title'>
+        <h3>Compras cadastradas</h3>
+        <p>Edite compras parceladas ou acompanhe o andamento de cada dívida.</p>
+    </div>
+
+    {% if compras %}
+        <div class='lista-edicao'>
+            {% for compra in compras %}
+                <form class='edicao-card' method='POST' action='{{ url_for('cartoes.editar_compra_cartao', cartao_id=cartao.id, compra_id=compra.id) }}'>
+                    <div class='form-row'>
+                        <div class='form-group'>
+                            <label>Descrição</label>
+                            <input type='text' name='descricao' value='{{ compra.descricao }}' required>
+                        </div>
+
+                        <div class='form-group'>
+                            <label>Valor total</label>
+                            <input type='text' name='valor_total' value='{{ compra.valor_total }}' required>
+                        </div>
+                    </div>
+
+                    <div class='form-row'>
+                        <div class='form-group'>
+                            <label>Data da compra</label>
+                            <input type='date' name='data_compra' value='{{ compra.data_compra }}' required>
+                        </div>
+
+                        <div class='form-group'>
+                            <label>Parcelas</label>
+                            <input type='number' name='parcelas_total' min='1' value='{{ compra.parcelas_total }}' required>
+                        </div>
+                    </div>
+
+                    <div class='form-row'>
+                        <div class='form-group'>
+                            <label>Categoria</label>
+                            <select name='categoria_id'>
+                                <option value=''>Sem categoria</option>
+
+                                {% for categoria in categorias %}
+                                    <option value='{{ categoria.id }}' {% if categoria.nome == compra.categoria %}selected{% endif %}>
+                                        {{ categoria.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class='form-group'>
+                            <label>Subcategoria</label>
+                            <select name='subcategoria_id'>
+                                <option value=''>Sem subcategoria</option>
+
+                                {% for subcategoria in subcategorias %}
+                                    <option value='{{ subcategoria.id }}' {% if subcategoria.nome == compra.subcategoria %}selected{% endif %}>
+                                        {{ subcategoria.nome }} - {{ subcategoria.categoria }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class='acoes-edicao'>
+                        <span class='badge-info'>{{ compra.status }}</span>
+
+                        {% if compra.parcela_atual > 0 %}
+                            <span class='badge-neutro'>Parcela {{ compra.parcela_atual }}/{{ compra.parcelas_total }}</span>
+                        {% else %}
+                            <span class='badge-neutro'>Ainda não iniciou</span>
+                        {% endif %}
+
+                        <span class='badge-neutro'>Faltam {{ compra.parcelas_pendentes }} parcela(s)</span>
+
+                        <strong class='valor-tabela despesa'>
+                            {{ formatar_moeda(compra.valor_parcela) }} por mês
+                        </strong>
+
+                        <strong>
+                            Pendente: {{ formatar_moeda(compra.valor_pendente) }}
+                        </strong>
+
+                        <button class='btn-secondary' type='submit'>Salvar alterações</button>
+
+                        <a class='link-excluir' href='{{ url_for('cartoes.excluir_compra_cartao', cartao_id=cartao.id, compra_id=compra.id) }}'>
+                            Desativar
+                        </a>
+                    </div>
+                </form>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class='empty-state'>
+            <strong>Nenhuma compra cadastrada</strong>
+            <p>Cadastre uma compra parcelada para acompanhar parcelas atuais e pendentes.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

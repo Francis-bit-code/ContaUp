@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Cartões - ContaUP{% endblock %}
+{% block pagina %}Cartões{% endblock %}
+
+{% block conteudo %}
+<section class='page-header'><div><h2>Cartões</h2><p>Cadastre cartões e depois abra o cartão para cadastrar dívidas e compras parceladas.</p></div></section>
+
+<section class='cards-grid'>
+    <article class='card resumo-card'><span>Cartões</span><strong>{{ cartoes|length }}</strong><p>Total de cartões ativos.</p></article>
+    <article class='card resumo-card'><span>Parcelas ativas</span><strong>{{ formatar_moeda(total_parcelas_ativas) }}</strong><p>Compromisso mensal dos cartões.</p></article>
+    <article class='card resumo-card'><span>Total pendente</span><strong class='valor despesa'>{{ formatar_moeda(total_pendente) }}</strong><p>Valor ainda não quitado.</p></article>
+    <article class='card resumo-card'><span>Onde cadastrar dívida?</span><strong>Abrir cartão</strong><p>Clique em Abrir cartão.</p></article>
+</section>
+
+<section class='form-grid'>
+    <article class='card'>
+        <div class='card-title'><h3>Novo cartão</h3><p>Depois de cadastrar, abra o cartão para adicionar compras.</p></div>
+        <form method='POST' action='{{ url_for('cartoes.novo_cartao') }}' class='formulario'>
+            <div class='form-row'><div class='form-group'><label>Nome</label><input type='text' name='nome' placeholder='Ex: Nubank' required></div><div class='form-group'><label>Banco</label><input type='text' name='banco' placeholder='Ex: Nubank'></div></div>
+            <div class='form-row'><div class='form-group'><label>Limite total</label><input type='text' name='limite_total' placeholder='Ex: 2500,00'></div><div class='form-group'><label>Fechamento</label><input type='number' name='dia_fechamento' min='1' max='31' placeholder='Ex: 10'></div><div class='form-group'><label>Vencimento</label><input type='number' name='dia_vencimento' min='1' max='31' placeholder='Ex: 17'></div></div>
+            <button type='submit' class='btn-primary'>Cadastrar cartão</button>
+        </form>
+    </article>
+    <article class='card apoio-card'><div class='card-title'><h3>Fluxo correto</h3><p>Cartão primeiro, dívidas depois.</p></div><div class='lista-dicas'><div><strong>1. Cadastre o cartão</strong><span>Exemplo: Nubank.</span></div><div><strong>2. Clique em Abrir cartão</strong><span>Lá fica o cadastro da dívida.</span></div><div><strong>3. Cadastre compra parcelada</strong><span>O sistema calcula parcelas.</span></div></div></article>
+</section>
+
+<section class='card'>
+    <div class='card-title'><h3>Meus cartões</h3><p>Visualização simples. Edição só quando abrir.</p></div>
+    {% if cartoes %}
+        <div class='lista-resumo'>
+            {% for cartao in cartoes %}
+                <div class='linha-lancamento'>
+                    <div class='lancamento-info'><div><strong>{{ cartao.nome }}</strong><span class='badge-info'>{{ formatar_moeda(cartao.limite_total) }}</span></div><p>{{ cartao.banco or 'Banco não informado' }}</p><small>{% if cartao.dia_fechamento %}Fecha dia {{ cartao.dia_fechamento }}{% else %}Sem fechamento{% endif %} | {% if cartao.dia_vencimento %}Vence dia {{ cartao.dia_vencimento }}{% else %}Sem vencimento{% endif %}</small></div>
+                    <div class='acoes-edicao'><a class='btn-primary' href='{{ url_for('cartoes.detalhe_cartao', cartao_id=cartao.id) }}'>Abrir cartão e cadastrar dívida</a></div>
+                    <details class='editar-detalhes'><summary>Editar cartão</summary><form class='formulario edicao-escondida' method='POST' action='{{ url_for('cartoes.editar_cartao', cartao_id=cartao.id) }}'><div class='form-row'><div class='form-group'><label>Nome</label><input type='text' name='nome' value='{{ cartao.nome }}' required></div><div class='form-group'><label>Banco</label><input type='text' name='banco' value='{{ cartao.banco or '' }}'></div></div><div class='form-row'><div class='form-group'><label>Limite</label><input type='text' name='limite_total' value='{{ cartao.limite_total }}'></div><div class='form-group'><label>Fechamento</label><input type='number' name='dia_fechamento' min='1' max='31' value='{{ cartao.dia_fechamento or '' }}'></div><div class='form-group'><label>Vencimento</label><input type='number' name='dia_vencimento' min='1' max='31' value='{{ cartao.dia_vencimento or '' }}'></div></div><div class='acoes-edicao'><button class='btn-secondary' type='submit'>Salvar</button><a class='link-excluir' href='{{ url_for('cartoes.excluir_cartao', cartao_id=cartao.id) }}'>Desativar</a></div></form></details>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class='empty-state'><strong>Nenhum cartão cadastrado</strong><p>Cadastre seu primeiro cartão para controlar dívidas parceladas.</p></div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang='pt-br'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>{% block titulo %}ContaUP{% endblock %}</title>
+    <link rel='stylesheet' href='{{ url_for('static', filename='css/style.css') }}'>
+</head>
+<body>
+    {% if session.get('usuario_id') %}
+        <div class='app-shell'>
+            <aside class='sidebar'>
+                <div class='brand'>
+                    <img class='brand-logo-full' src='{{ url_for('static', filename='img/logo_horizontal.png') }}' alt='Logo ContaUP'>
+                </div>
+
+                <nav class='menu'>
+                    <a class='{% if request.endpoint and request.endpoint.startswith('dashboard.') %}ativo{% endif %}' href='{{ url_for('dashboard.dashboard') }}'>Início</a>
+                    <a class='{% if request.endpoint and request.endpoint.startswith('lancamentos.') %}ativo{% endif %}' href='{{ url_for('lancamentos.lancamentos') }}'>Lançamentos</a>
+                    <a class='{% if request.endpoint and request.endpoint.startswith('renda_fixa.') %}ativo{% endif %}' href='{{ url_for('renda_fixa.renda_fixa') }}'>Renda Fixa</a>
+                    <a class='{% if request.endpoint and request.endpoint.startswith('categorias.') %}ativo{% endif %}' href='{{ url_for('categorias.categorias') }}'>Categorias</a>
+                    <a class='{% if request.endpoint and request.endpoint.startswith('cartoes.') %}ativo{% endif %}' href='{{ url_for('cartoes.cartoes') }}'>Cartões</a>
+                    <a class='{% if request.endpoint and request.endpoint.startswith('gastos_fixos.') %}ativo{% endif %}' href='{{ url_for('gastos_fixos.gastos_fixos') }}'>Gastos Fixos</a>
+                    <a class='{% if request.endpoint and request.endpoint.startswith('planejamento.') %}ativo{% endif %}' href='{{ url_for('planejamento.planejamento') }}'>Planejamento</a>
+                    <a class='{% if request.endpoint and request.endpoint.startswith('renda_extra.') %}ativo{% endif %}' href='{{ url_for('renda_extra.renda_extra') }}'>Renda Extra</a>
+                    <a class='{% if request.endpoint and request.endpoint.startswith('relatorios.') %}ativo{% endif %}' href='{{ url_for('relatorios.relatorios') }}'>Relatórios</a>
+                </nav>
+
+                <div class='sidebar-footer'>
+                    <span>{{ session.get('usuario_nome') }}</span>
+                    <a href='{{ url_for('auth.logout') }}'>Sair</a>
+                </div>
+            </aside>
+
+            <section class='page'>
+                <header class='topbar'>
+                    <div>
+                        <h1>{% block pagina %}ContaUP{% endblock %}</h1>
+                        <p>Organize seus gastos, acompanhe parcelas e planeje melhor seu dinheiro.</p>
+                    </div>
+
+                    <a class='btn-top' href='{{ url_for('lancamentos.lancamentos') }}'>Cadastrar valor</a>
+                </header>
+
+                {% with mensagens = get_flashed_messages(with_categories=true) %}
+                    {% if mensagens %}
+                        <div class='alertas'>
+                            {% for categoria, mensagem in mensagens %}
+                                <div class='alerta {{ categoria }}'>{{ mensagem }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <main class='content'>
+    {% else %}
+        <main class='auth-wrapper'>
+            {% with mensagens = get_flashed_messages(with_categories=true) %}
+                {% if mensagens %}
+                    <div class='alertas auth-alertas'>
+                        {% for categoria, mensagem in mensagens %}
+                            <div class='alerta {{ categoria }}'>{{ mensagem }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+    {% endif %}
+                    {% block conteudo %}{% endblock %}
+    {% if session.get('usuario_id') %}
+                </main>
+            </section>
+        </div>
+    {% else %}
+        </main>
+    {% endif %}
+</body>
+</html>
